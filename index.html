@@ -1,0 +1,973 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ваши глаза поистине красивые, Ангелина Александровна</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #03060b;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    #eyeCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .glass-panel {
+      background: rgba(5, 9, 18, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 14px 38px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .palette-btn[data-active="true"] {
+      background: rgba(125, 211, 252, 0.2);
+      border-color: rgba(186, 230, 253, 0.6);
+      color: #ffffff;
+      box-shadow: 0 0 18px rgba(125, 211, 252, 0.24);
+    }
+
+    .density-btn[data-active="true"] {
+      background: rgba(255, 212, 59, 0.22);
+      border-color: rgba(255, 212, 59, 0.62);
+      color: #fef08a;
+    }
+
+    .bottom-backdrop {
+      background: linear-gradient(
+        180deg,
+        rgba(3, 6, 11, 0) 0%,
+        rgba(3, 6, 11, 0.78) 34%,
+        rgba(3, 6, 11, 0.96) 100%
+      );
+    }
+
+    @keyframes captionFadeUp {
+      0% {
+        opacity: 0;
+        transform: translateY(14px);
+        filter: blur(6px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    .animate-caption {
+      opacity: 0;
+      animation: captionFadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
+    }
+  </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden bg-[#03060b]">
+
+  <!-- Полноэкранный Canvas для символьной отрисовки голубо-серого глаза -->
+  <canvas id="eyeCanvas"
+          class="w-full h-full block"
+          aria-label="Анимация голубо-серого женского глаза"></canvas>
+
+  <!-- Кнопка возврата интерфейса, если пользователь скрыл всю панель -->
+  <button id="showUiFloatingBtn"
+          type="button"
+          class="hidden fixed top-3 right-3 z-30 glass-panel px-3.5 py-1.5 rounded-full text-xs font-medium text-sky-200 hover:text-white transition-all cursor-pointer">
+    Показать панель
+  </button>
+
+  <!-- Компактная сворачиваемая панель управления вверху -->
+  <header id="topControlBar"
+          class="fixed top-3 sm:top-5 left-0 right-0 z-20 px-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 pointer-events-none">
+    <div class="glass-panel pointer-events-auto inline-flex flex-wrap items-center justify-center gap-1 p-1 rounded-full max-w-full">
+      <button id="toggleDrawerBtn"
+              type="button"
+              aria-expanded="false"
+              class="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-sky-200 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1.5">
+        <span id="drawerLabel">Меню</span>
+        <span id="drawerArrow" aria-hidden="true">▸</span>
+      </button>
+
+      <div id="collapsibleBody" class="hidden flex-wrap items-center justify-center gap-1">
+        <span class="text-white/15 px-0.5">|</span>
+        <button type="button"
+                data-palette="blueGrey"
+                data-active="true"
+                class="palette-btn px-2.5 sm:px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-slate-300 hover:text-white border border-transparent transition-all cursor-pointer">
+          Голубо-серый
+        </button>
+        <button type="button"
+                data-palette="warmGold"
+                data-active="false"
+                class="palette-btn px-2.5 sm:px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-slate-300 hover:text-white border border-transparent transition-all cursor-pointer">
+          Тёплое золото
+        </button>
+        <button type="button"
+                data-palette="crimsonAccent"
+                data-active="false"
+                class="palette-btn px-2.5 sm:px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-slate-300 hover:text-white border border-transparent transition-all cursor-pointer">
+          Алый акцент
+        </button>
+
+        <span class="text-white/15 px-0.5">|</span>
+
+        <button type="button"
+                data-density="high"
+                data-active="true"
+                class="density-btn px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-slate-300 hover:text-white border border-transparent transition-all cursor-pointer">
+          Высокая
+        </button>
+        <button type="button"
+                data-density="ultra"
+                data-active="false"
+                class="density-btn px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-slate-300 hover:text-white border border-transparent transition-all cursor-pointer">
+          Ультра
+        </button>
+        <button type="button"
+                data-density="extreme"
+                data-active="false"
+                class="density-btn px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-slate-300 hover:text-white border border-transparent transition-all cursor-pointer">
+          Экстрим
+        </button>
+
+        <span class="text-white/15 px-0.5">|</span>
+
+        <button id="hideAllUiBtn"
+                type="button"
+                class="px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+          Скрыть UI
+        </button>
+      </div>
+    </div>
+
+    <div class="glass-panel pointer-events-auto inline-flex items-center gap-1 p-1 rounded-full">
+      <button id="blinkActionBtn"
+              type="button"
+              class="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-sky-200 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1">
+        <span aria-hidden="true">◠</span>
+        <span>Моргнуть</span>
+      </button>
+      <button id="replayActionBtn"
+              type="button"
+              class="px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium text-amber-200 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1">
+        <span aria-hidden="true">↻</span>
+        <span>Повтор</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Приподнятый блок подписи внизу экрана с двумя строками -->
+  <footer class="bottom-backdrop fixed bottom-0 left-0 right-0 z-20 pt-10 pb-16 sm:pb-20 md:pb-24 px-4 text-center pointer-events-none">
+    <div id="captionBlock" class="animate-caption max-w-4xl mx-auto space-y-1.5 sm:space-y-2">
+      <p class="font-serif italic text-2xl sm:text-4xl md:text-[2.85rem] font-semibold tracking-wide text-slate-50 leading-snug drop-shadow-[0_4px_24px_rgba(125,211,252,0.3)]">
+        Ваши глаза поистине красивые, Ангелина Александровна
+      </p>
+      <p class="font-serif text-lg sm:text-2xl md:text-[1.75rem] tracking-wider text-amber-300 leading-snug drop-shadow-[0_0_20px_rgba(255,212,59,0.45)]">
+        Сохраните эту искру в ваших глазах
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    /**
+     * ==================== ПЕРЕМЕННЫЕ, ПАЛИТРЫ И КОНСТАНТЫ ====================
+     * Все константы, палитры, уровни плотности, состояния моргания и функции
+     * объявлены на верхнем уровне в едином блоке скрипта.
+     */
+    const BG_HEX = '#03060b';
+
+    const PALETTES = {
+      blueGrey: {
+        id: 'blueGrey',
+        shadowDeep: '#10213d',
+        scleraDim: '#4d6f96',
+        scleraMid: '#98c2e6',
+        scleraBright: '#f8fcff',
+        irisOuter: '#2c5c8a',
+        irisSlate: '#5d98c9',
+        irisSky: '#56b9ff',
+        irisIce: '#d4f1ff',
+        irisHighlight: '#ffffff',
+        amberFlecks: ['#e8921c', '#f5b041', '#c46d0c'],
+        pupilCore: '#04070e',
+        lashDark: '#1b263b',
+        lashTip: '#bae6fd',
+        scanLine: 'rgba(125, 211, 252, 0.24)',
+        pulseRing: 'rgba(186, 230, 253, 0.55)'
+      },
+      warmGold: {
+        id: 'warmGold',
+        shadowDeep: '#1d1307',
+        scleraDim: '#473419',
+        scleraMid: '#8c6930',
+        scleraBright: '#fffbeb',
+        irisOuter: '#4a2b09',
+        irisSlate: '#9c6822',
+        irisSky: '#e08e1b',
+        irisIce: '#fde047',
+        irisHighlight: '#fefce8',
+        amberFlecks: ['#f59e0b', '#fbbf24', '#d97706'],
+        pupilCore: '#050402',
+        lashDark: '#26180a',
+        lashTip: '#fef08a',
+        scanLine: 'rgba(253, 224, 71, 0.2)',
+        pulseRing: 'rgba(254, 240, 138, 0.5)'
+      },
+      crimsonAccent: {
+        id: 'crimsonAccent',
+        shadowDeep: '#210a13',
+        scleraDim: '#4b2030',
+        scleraMid: '#943a56',
+        scleraBright: '#fff1f2',
+        irisOuter: '#540e27',
+        irisSlate: '#ab2d52',
+        irisSky: '#f43f5e',
+        irisIce: '#fda4af',
+        irisHighlight: '#fff1f2',
+        amberFlecks: ['#fb7185', '#f59e0b', '#e11d48'],
+        pupilCore: '#060204',
+        lashDark: '#290b16',
+        lashTip: '#fecdd3',
+        scanLine: 'rgba(251, 113, 133, 0.2)',
+        pulseRing: 'rgba(254, 205, 211, 0.5)'
+      }
+    };
+
+    const DENSITY_PRESETS = {
+      high: { step: 7.2, fontSize: 7.4 },
+      ultra: { step: 5.4, fontSize: 5.6 },
+      extreme: { step: 4.0, fontSize: 4.2 }
+    };
+
+    const GLYPH_RAMP = ' .:-=+*#%@0179/\\|()[]{}~^';
+    const RADIAL_GLYPHS = ['|', '/', '\\', '(', ')', '1', '7', '*'];
+    const LASH_GLYPHS = [')', '(', '/', '\\', '|', '7', '1'];
+
+    const eyeState = {
+      paletteKey: 'blueGrey',
+      densityKey: 'high',
+      drawerOpen: false,
+      uiHidden: false,
+      targetX: 0,
+      targetY: 0,
+      gazeX: 0,
+      gazeY: 0,
+      revealStartMs: 0,
+      revealDurationMs: 1750,
+      isBlinking: false,
+      blinkStartMs: 0,
+      blinkDurationMs: 280,
+      blinkDouble: false,
+      nextBlinkMs: 0,
+      ripples: [],
+      viewW: 960,
+      viewH: 640
+    };
+
+    let eyeCanvas = null;
+    let eyeCtx = null;
+    let rafId = null;
+
+    /**
+     * ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ МОРГАНИЯ И ВРЕМЕНИ ====================
+     */
+    function schedulePeriodicBlink(nowMs) {
+      const base = typeof nowMs === 'number' && nowMs > 0 ? nowMs : performance.now();
+      eyeState.nextBlinkMs = base + 2700 + Math.random() * 3800;
+    }
+
+    function startBlink(nowMs, forceDouble = false) {
+      const t = typeof nowMs === 'number' && nowMs > 0 ? nowMs : performance.now();
+      eyeState.isBlinking = true;
+      eyeState.blinkStartMs = t;
+      eyeState.blinkDouble = Boolean(forceDouble) || Math.random() < 0.25;
+      eyeState.blinkDurationMs = eyeState.blinkDouble ? 530 : 275;
+    }
+
+    function getEyelidOpenness(nowMs) {
+      if (eyeState.nextBlinkMs === 0) {
+        schedulePeriodicBlink(nowMs);
+      }
+      if (!eyeState.isBlinking && nowMs >= eyeState.nextBlinkMs) {
+        startBlink(nowMs);
+        schedulePeriodicBlink(nowMs);
+      }
+      if (!eyeState.isBlinking) {
+        return 1;
+      }
+
+      const elapsed = Math.max(0, nowMs - eyeState.blinkStartMs);
+      const total = eyeState.blinkDurationMs;
+      if (elapsed >= total) {
+        eyeState.isBlinking = false;
+        eyeState.blinkDouble = false;
+        return 1;
+      }
+
+      const singleCycle = (p) => {
+        if (p < 0.44) {
+          const k = p / 0.44;
+          const easeInOut = k * k * (3 - 2 * k);
+          return 1 - easeInOut * 0.94;
+        }
+        const k = (p - 0.44) / 0.56;
+        const easeOut = 1 - Math.pow(1 - k, 2.3);
+        return 0.06 + easeOut * 0.94;
+      };
+
+      if (!eyeState.blinkDouble) {
+        return singleCycle(elapsed / total);
+      }
+
+      const firstEnd = total * 0.45;
+      const pauseEnd = total * 0.56;
+      if (elapsed < firstEnd) {
+        return singleCycle(elapsed / firstEnd);
+      }
+      if (elapsed < pauseEnd) {
+        return 0.96;
+      }
+      return singleCycle((elapsed - pauseEnd) / (total - pauseEnd));
+    }
+
+    /**
+     * ==================== РАЗМЕРЫ ХОЛСТА И АНИМАЦИЯ ПРОЯВЛЕНИЯ ====================
+     */
+    function syncCanvasSize() {
+      if (!eyeCanvas || !eyeCtx) return;
+      const rect = eyeCanvas.getBoundingClientRect();
+      const w = Math.max(320, Math.floor(rect.width || window.innerWidth || 960));
+      const h = Math.max(240, Math.floor(rect.height || window.innerHeight || 640));
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      eyeState.viewW = w;
+      eyeState.viewH = h;
+      eyeCanvas.width = Math.floor(w * dpr);
+      eyeCanvas.height = Math.floor(h * dpr);
+      eyeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function replayRevealAnimation() {
+      eyeState.revealStartMs = performance.now();
+      eyeState.isBlinking = false;
+      schedulePeriodicBlink(eyeState.revealStartMs);
+
+      const captionEl = document.getElementById('captionBlock');
+      if (captionEl) {
+        captionEl.style.animation = 'none';
+        void captionEl.offsetWidth;
+        captionEl.style.animation = '';
+      }
+    }
+
+    function addRipple(clientX, clientY) {
+      const rect = eyeCanvas ? eyeCanvas.getBoundingClientRect() : { left: 0, top: 0 };
+      eyeState.ripples.push({
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+        radius: 6,
+        alpha: 0.75
+      });
+      if (eyeState.ripples.length > 8) {
+        eyeState.ripples.shift();
+      }
+    }
+
+    /**
+     * ==================== ВЫЧИСЛЕНИЕ ЯЧЕЙКИ СИМВОЛЬНОЙ МАТРИЦЫ ====================
+     */
+    function sampleEyeCell(px, py, eyeGeom, gazeOffset, blinkOpenness, timeSec, palette) {
+      const dx = px - eyeGeom.cx;
+      const dy = py - eyeGeom.cy;
+      const halfW = eyeGeom.halfW;
+      const halfH = eyeGeom.halfH;
+
+      const nx = dx / halfW;
+      const topCurve = -0.74 + 0.74 * Math.pow(Math.min(1, Math.abs(nx)), 1.56);
+      const bottomCurve = 0.78 - 0.62 * Math.pow(Math.min(1, Math.abs(nx)), 1.46);
+      const ny = halfH > 1 ? dy / halfH : 20;
+
+      const lidClosure = 1 - blinkOpenness;
+      const activeTopLid = topCurve + lidClosure * (bottomCurve - topCurve) * 0.95;
+      const activeBottomLid = bottomCurve - lidClosure * 0.14;
+
+      const insideAperture =
+        nx >= -1.05 &&
+        nx <= 1.05 &&
+        ny >= activeTopLid - 0.15 &&
+        ny <= activeBottomLid + 0.15;
+
+      const insideSclera =
+        nx * nx + Math.pow(ny / 0.8, 2) <= 1.05 &&
+        ny >= activeTopLid &&
+        ny <= activeBottomLid;
+
+      // Верхние и нижние ресницы с синхронным движением при моргании
+      let lashStrength = 0;
+      if (Math.abs(nx) <= 1.08) {
+        const span = (nx + 1.08) / 2.16;
+        const arch = Math.sin(Math.max(0, Math.min(1, span)) * Math.PI);
+        const sweep = nx > 0 ? nx * 0.28 : nx * 0.16;
+        const topLashTip = activeTopLid - (0.09 + arch * (0.6 - lidClosure * 0.24));
+        const sway = Math.sin(nx * 36 + timeSec * 1.6) * 0.035;
+
+        if (ny < activeTopLid + 0.05 && ny > topLashTip + sway) {
+          const hairWave = Math.sin(nx * 66 + Math.sin(nx * 15) * 2.4);
+          if (hairWave > -0.26) {
+            const fade = Math.max(0, 1 - Math.abs(ny - (activeTopLid + topLashTip) * 0.5) / 0.37);
+            lashStrength = Math.max(lashStrength, fade * (0.65 + arch * 0.35));
+          }
+        }
+
+        const botLashTip = activeBottomLid + 0.04 + arch * 0.24 + sweep * 0.08;
+        if (ny > activeBottomLid - 0.02 && ny < botLashTip) {
+          if (Math.sin(nx * 52) > 0.1) {
+            lashStrength = Math.max(lashStrength, arch * 0.52);
+          }
+        }
+      }
+
+      // Координаты центра радужки/зрачка с учётом направления взгляда
+      const irisCx = eyeGeom.cx + gazeOffset.x;
+      const irisCy = eyeGeom.cy + gazeOffset.y;
+      const idX = px - irisCx;
+      const idY = py - irisCy;
+      const distIris = Math.hypot(idX, idY);
+      const irisR = eyeGeom.irisR;
+      const pupilR = eyeGeom.pupilR;
+
+      // Очистка зоны вокруг золотой искорки внутри зрачка от фоновых символов и цифр
+      const sparkR = eyeGeom.sparkR;
+      if (insideSclera && distIris <= sparkR * 1.15) {
+        return { draw: false };
+      }
+
+      // Внутри зрачка вокруг искорки
+      if (insideSclera && distIris <= pupilR) {
+        const angle = Math.atan2(idY, idX);
+        const stripe = Math.sin(py * 0.36 + timeSec * 2.2);
+        const charIdx = Math.abs(Math.floor((angle + Math.PI) * 7 + py * 0.2)) % GLYPH_RAMP.length;
+        return {
+          draw: true,
+          ch: stripe > 0.65 ? '.' : GLYPH_RAMP[charIdx],
+          color: palette.pupilCore,
+          weight: 0.32
+        };
+      }
+
+      // Внутри радужки (голубо-серый узор с ледяными нитями и тёплыми вкраплениями)
+      if (insideSclera && distIris <= irisR) {
+        const normR = (distIris - pupilR) / Math.max(1, irisR - pupilR);
+        const angle = Math.atan2(idY, idX);
+
+        const radialWave =
+          Math.sin(angle * 28 + normR * 5) * 0.5 +
+          Math.cos(angle * 53 - normR * 9) * 0.35 +
+          Math.sin(angle * 13 + timeSec * 0.9) * 0.15;
+
+        const bandPattern = Math.sin(py * 0.29 + Math.sin(px * 0.04) * 1.8);
+        const lidShadow = ny < activeTopLid + 0.22 ? 0.66 : 1.0;
+
+        // Тёплое золотисто-янтарное вкрапление на радужке по мотивам фото
+        const fleckAngle = -2.58;
+        const fleckDist = irisR * 0.56;
+        const fx = irisCx + Math.cos(fleckAngle) * fleckDist;
+        const fy = irisCy + Math.sin(fleckAngle) * fleckDist;
+        const distFleck = Math.hypot(px - fx, py - fy);
+
+        let color = palette.irisSky;
+        if (distFleck < irisR * 0.14) {
+          color = palette.amberFlecks[0];
+        } else if (normR < 0.22) {
+          color = radialWave > -0.1 ? palette.irisHighlight : palette.irisIce;
+        } else if (normR < 0.56) {
+          color = radialWave > 0.12 ? palette.irisIce : palette.irisSky;
+        } else if (normR < 0.86) {
+          color = bandPattern > 0.15 ? palette.irisSky : palette.irisSlate;
+        } else {
+          color = palette.irisOuter;
+        }
+
+        const strandIdx = Math.abs(Math.floor((angle + Math.PI) * 18 + normR * 24)) % RADIAL_GLYPHS.length;
+        const ch =
+          radialWave > 0.22
+            ? RADIAL_GLYPHS[strandIdx]
+            : GLYPH_RAMP[Math.min(GLYPH_RAMP.length - 1, Math.max(1, Math.floor((0.45 + radialWave * 0.45) * (GLYPH_RAMP.length - 1))))];
+
+        return {
+          draw: true,
+          ch,
+          color,
+          weight: Math.max(0.35, Math.min(1, (0.78 + radialWave * 0.22) * lidShadow))
+        };
+      }
+
+      // Склера с ярким голубовато-белым свечением и мягким затемнением у краёв
+      if (insideSclera) {
+        const edgeDist = Math.min(1, Math.hypot(nx * 0.82, ny * 1.05));
+        const band = Math.sin(py * 0.31);
+        const color =
+          edgeDist > 0.76
+            ? palette.scleraDim
+            : edgeDist > 0.45
+              ? palette.scleraMid
+              : palette.scleraBright;
+
+        const idx = Math.min(
+          GLYPH_RAMP.length - 1,
+          Math.max(1, Math.floor((0.32 + (1 - edgeDist) * 0.45 + band * 0.12) * (GLYPH_RAMP.length - 1)))
+        );
+        return {
+          draw: true,
+          ch: band > 0.72 ? '=' : GLYPH_RAMP[idx],
+          color,
+          weight: Math.max(0.28, (0.88 - edgeDist * 0.45) * (band > 0.72 ? 0.65 : 1))
+        };
+      }
+
+      // Ресницы и мягкое обрамление века
+      if (insideAperture && lashStrength > 0.08) {
+        const lashIdx = Math.abs(Math.floor(px * 0.37 + py * 0.19)) % LASH_GLYPHS.length;
+        return {
+          draw: true,
+          ch: LASH_GLYPHS[lashIdx],
+          color: lashStrength > 0.68 ? palette.lashTip : palette.lashDark,
+          weight: Math.min(1, 0.45 + lashStrength * 0.55)
+        };
+      }
+
+      // Деликатный разреженный фон вокруг глаза (только выше зоны нижнего текста)
+      const bgNoise = Math.sin(px * 0.045 + timeSec * 0.7) * Math.cos(py * 0.045 - timeSec * 0.5);
+      if (bgNoise > 0.78 && Math.abs(nx) < 1.65 && Math.abs(ny) < 1.55) {
+        return {
+          draw: true,
+          ch: '.',
+          color: palette.shadowDeep,
+          weight: 0.25
+        };
+      }
+
+      return { draw: false };
+    }
+
+    /**
+     * ==================== ОТРИСОВКА ЗОЛОТОЙ ИСКОРКИ ВНУТРИ ЗРАЧКА ====================
+     */
+    function drawGoldenStarSpark(ctx, cx, cy, baseRadius, timeSec) {
+      const twinkle = 0.86 + 0.18 * Math.sin(timeSec * 4.6) + 0.08 * Math.cos(timeSec * 8.2);
+      const rOuter = baseRadius * twinkle;
+      const rInner = rOuter * 0.24;
+      const points = 4;
+      const rot = timeSec * 0.35;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Тёплое золотое сияние вокруг звёздочки внутри зрачка
+      const aura = ctx.createRadialGradient(0, 0, rInner * 0.2, 0, 0, rOuter * 1.45);
+      aura.addColorStop(0, 'rgba(255, 250, 205, 0.95)');
+      aura.addColorStop(0.45, 'rgba(255, 212, 59, 0.52)');
+      aura.addColorStop(1, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(0, 0, rOuter * 1.45, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Четырёхлучевая золотистая звёздочка с плавным поворотом
+      ctx.rotate(rot);
+      ctx.beginPath();
+      for (let i = 0; i < points * 2; i++) {
+        const rad = i % 2 === 0 ? rOuter : rInner;
+        const a = (i * Math.PI) / points;
+        const sx = Math.cos(a) * rad;
+        const sy = Math.sin(a) * rad;
+        if (i === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.closePath();
+
+      const starGrad = ctx.createRadialGradient(0, 0, 0.5, 0, 0, rOuter);
+      starGrad.addColorStop(0, '#ffffff');
+      starGrad.addColorStop(0.35, '#ffe57f');
+      starGrad.addColorStop(0.75, '#ffb703');
+      starGrad.addColorStop(1, '#f59e0b');
+
+      ctx.fillStyle = starGrad;
+      ctx.fill();
+
+      // Тонкие диагональные лучики-искры
+      ctx.strokeStyle = 'rgba(255, 235, 130, 0.75)';
+      ctx.lineWidth = Math.max(0.8, baseRadius * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(-rOuter * 0.58, -rOuter * 0.58);
+      ctx.lineTo(rOuter * 0.58, rOuter * 0.58);
+      ctx.moveTo(rOuter * 0.58, -rOuter * 0.58);
+      ctx.lineTo(-rOuter * 0.58, rOuter * 0.58);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    /**
+     * ==================== ГЛАВНАЯ ФУНКЦИЯ КАДРА С ЗАЩИТОЙ TRY/CATCH ====================
+     */
+    function renderEyeFrame(nowMs) {
+      if (!eyeCanvas || !eyeCtx) return;
+
+      try {
+        const w = eyeState.viewW;
+        const h = eyeState.viewH;
+        const palette = PALETTES[eyeState.paletteKey] || PALETTES.blueGrey;
+        const density = DENSITY_PRESETS[eyeState.densityKey] || DENSITY_PRESETS.high;
+
+        // Плавное следование взгляда за указателем или мягкий дрейф в покое
+        const timeSec = (nowMs || 0) * 0.001;
+        const desiredX = eyeState.pointerInside ? eyeState.targetX : Math.sin(timeSec * 0.65) * 0.24;
+        const desiredY = eyeState.pointerInside ? eyeState.targetY : Math.cos(timeSec * 0.5) * 0.16;
+
+        eyeState.gazeX += (desiredX - eyeState.gazeX) * 0.1;
+        eyeState.gazeY += (desiredY - eyeState.gazeY) * 0.1;
+
+        const elapsedReveal = Math.max(0, (nowMs || 0) - eyeState.revealStartMs);
+        const revealT = Math.min(1, elapsedReveal / eyeState.revealDurationMs);
+        const easedReveal = 1 - Math.pow(1 - revealT, 2.6);
+
+        const blinkOpenness = getEyelidOpenness(nowMs || 0);
+
+        // Заливка фона
+        eyeCtx.fillStyle = BG_HEX;
+        eyeCtx.fillRect(0, 0, w, h);
+
+        // Геометрия крупного выразительного глаза по центру экрана (выше нижнего текста)
+        const eyeCenterY = h * 0.45;
+        const halfW = Math.min(w * 0.43, h * 0.46, 430);
+        const halfH = Math.min(halfW * 0.56, h * 0.26, 235);
+        const irisR = Math.min(halfW * 0.44, halfH * 0.82);
+        const pupilR = irisR * 0.42;
+        const sparkR = Math.max(7, pupilR * 0.46);
+
+        const eyeGeom = {
+          cx: w * 0.5,
+          cy: eyeCenterY,
+          halfW,
+          halfH,
+          irisR,
+          pupilR,
+          sparkR
+        };
+
+        const gazeOffset = {
+          x: eyeState.gazeX * (irisR - pupilR) * 0.42,
+          y: eyeState.gazeY * (halfH * 0.22)
+        };
+
+        // Ограничиваем нижнюю границу символов, чтобы нижний текст оставался чистым
+        const maxSymbolY = h * 0.74;
+        const step = density.step;
+
+        eyeCtx.font = `600 ${density.fontSize}px "Inter", monospace`;
+        eyeCtx.textAlign = 'center';
+        eyeCtx.textBaseline = 'middle';
+
+        // Полосатое проявление в духе видео при загрузке / повторе
+        const scanProgress = (elapsedReveal % 900) / 900;
+        const scanY = eyeCenterY - halfH * 1.4 + scanProgress * halfH * 2.8;
+
+        for (let y = step * 0.5; y < maxSymbolY; y += step) {
+          // Эффект сегментированного раскрытия строк
+          const rowNorm = Math.abs(y - eyeCenterY) / Math.max(1, halfH * 1.35);
+          if (revealT < 1 && rowNorm > easedReveal * 1.25 + 0.12) {
+            continue;
+          }
+
+          for (let x = step * 0.5; x < w; x += step) {
+            const cell = sampleEyeCell(x, y, eyeGeom, gazeOffset, blinkOpenness, timeSec, palette);
+            if (!cell.draw) continue;
+
+            eyeCtx.globalAlpha = Math.max(0.1, Math.min(1, cell.weight * (0.35 + easedReveal * 0.65)));
+            eyeCtx.fillStyle = cell.color;
+            eyeCtx.fillText(cell.ch, x, y);
+          }
+        }
+
+        // Тонкая горизонтальная полоса сканирования на этапе проявления
+        if (revealT < 0.92) {
+          eyeCtx.globalAlpha = (1 - revealT) * 0.55;
+          eyeCtx.fillStyle = palette.scanLine;
+          eyeCtx.fillRect(eyeGeom.cx - halfW * 1.05, scanY, halfW * 2.1, 2.5);
+        }
+
+        // Кольца отклика при клике или касании
+        for (let i = eyeState.ripples.length - 1; i >= 0; i--) {
+          const r = eyeState.ripples[i];
+          r.radius += 2.6;
+          r.alpha *= 0.95;
+          if (r.alpha < 0.03) {
+            eyeState.ripples.splice(i, 1);
+            continue;
+          }
+          eyeCtx.globalAlpha = r.alpha;
+          eyeCtx.strokeStyle = palette.pulseRing;
+          eyeCtx.lineWidth = 1.5;
+          eyeCtx.beginPath();
+          eyeCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+          eyeCtx.stroke();
+        }
+
+        // Яркая золотистая звёздочка-искорка внутри зрачка, скрываемая при закрытии век
+        const sparkCenterX = eyeGeom.cx + gazeOffset.x;
+        const sparkCenterY = eyeGeom.cy + gazeOffset.y;
+        const lidTopPx = eyeGeom.cy + (-0.74 + (1 - blinkOpenness) * 1.52) * halfH;
+        const lidBotPx = eyeGeom.cy + (0.78 - (1 - blinkOpenness) * 0.14) * halfH;
+        const sparkClipFactor = Math.max(
+          0,
+          Math.min(1, (blinkOpenness - 0.16) / 0.55)
+        );
+
+        if (sparkClipFactor > 0.03 && sparkCenterY > lidTopPx + sparkR * 0.25 && sparkCenterY < lidBotPx - sparkR * 0.2) {
+          eyeCtx.save();
+          eyeCtx.beginPath();
+          eyeCtx.rect(0, Math.max(0, lidTopPx), w, Math.max(0, lidBotPx - lidTopPx));
+          eyeCtx.clip();
+          eyeCtx.globalAlpha = Math.min(1, sparkClipFactor * (0.35 + easedReveal * 0.65));
+          drawGoldenStarSpark(eyeCtx, sparkCenterX, sparkCenterY, sparkR, timeSec);
+          eyeCtx.restore();
+        }
+
+        eyeCtx.globalAlpha = 1;
+      } catch (err) {
+        // Надёжный резервный кадр при любой ошибке отрисовки
+        try {
+          eyeCtx.globalAlpha = 1;
+          eyeCtx.fillStyle = BG_HEX;
+          eyeCtx.fillRect(0, 0, eyeState.viewW, eyeState.viewH);
+          const cx = eyeState.viewW * 0.5;
+          const cy = eyeState.viewH * 0.45;
+          eyeCtx.strokeStyle = '#7dd3fc';
+          eyeCtx.lineWidth = 2.5;
+          eyeCtx.beginPath();
+          eyeCtx.ellipse(cx, cy, Math.min(220, eyeState.viewW * 0.32), 72, 0, 0, Math.PI * 2);
+          eyeCtx.stroke();
+          drawGoldenStarSpark(eyeCtx, cx, cy, 14, (nowMs || 0) * 0.001);
+        } catch (_fallbackErr) {}
+      }
+    }
+
+    function stepAnimationLoop(nowMs) {
+      renderEyeFrame(nowMs);
+      rafId = requestAnimationFrame(stepAnimationLoop);
+    }
+
+    /**
+     * ==================== ОБРАБОТЧИКИ UI И ВЗАИМОДЕЙСТВИЯ ====================
+     */
+    function applyPaletteSelection(key) {
+      if (!PALETTES[key]) return;
+      eyeState.paletteKey = key;
+      document.querySelectorAll('.palette-btn').forEach((btn) => {
+        btn.setAttribute('data-active', btn.getAttribute('data-palette') === key ? 'true' : 'false');
+      });
+    }
+
+    function applyDensitySelection(key) {
+      if (!DENSITY_PRESETS[key]) return;
+      eyeState.densityKey = key;
+      document.querySelectorAll('.density-btn').forEach((btn) => {
+        btn.setAttribute('data-active', btn.getAttribute('data-density') === key ? 'true' : 'false');
+      });
+    }
+
+    function applyDrawerState(open) {
+      eyeState.drawerOpen = Boolean(open);
+      const body = document.getElementById('collapsibleBody');
+      const toggleBtn = document.getElementById('toggleDrawerBtn');
+      const arrow = document.getElementById('drawerArrow');
+      if (body) {
+        body.classList.toggle('hidden', !eyeState.drawerOpen);
+        body.classList.toggle('flex', eyeState.drawerOpen);
+      }
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', eyeState.drawerOpen ? 'true' : 'false');
+      }
+      if (arrow) {
+        arrow.textContent = eyeState.drawerOpen ? '▾' : '▸';
+      }
+    }
+
+    function applyFullUiVisibility(hidden) {
+      eyeState.uiHidden = Boolean(hidden);
+      const bar = document.getElementById('topControlBar');
+      const floatingBtn = document.getElementById('showUiFloatingBtn');
+      if (bar) {
+        bar.classList.toggle('hidden', eyeState.uiHidden);
+      }
+      if (floatingBtn) {
+        floatingBtn.classList.toggle('hidden', !eyeState.uiHidden);
+      }
+    }
+
+    function updateGazeTargetFromClient(clientX, clientY) {
+      const w = Math.max(1, window.innerWidth || eyeState.viewW);
+      const h = Math.max(1, window.innerHeight || eyeState.viewH);
+      const nx = (clientX / w) * 2 - 1;
+      const ny = (clientY / h) * 2 - 1;
+      eyeState.targetX = Math.max(-1, Math.min(1, nx));
+      eyeState.targetY = Math.max(-1, Math.min(1, ny));
+      eyeState.pointerInside = true;
+    }
+
+    function bindAllEvents() {
+      window.addEventListener('mousemove', (e) => {
+        updateGazeTargetFromClient(e.clientX, e.clientY);
+      });
+
+      window.addEventListener('mouseleave', () => {
+        eyeState.pointerInside = false;
+      });
+
+      window.addEventListener(
+        'touchmove',
+        (e) => {
+          if (e.touches && e.touches.length > 0) {
+            updateGazeTargetFromClient(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        },
+        { passive: true }
+      );
+
+      window.addEventListener(
+        'touchstart',
+        (e) => {
+          if (e.touches && e.touches.length > 0) {
+            updateGazeTargetFromClient(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        },
+        { passive: true }
+      );
+
+      if (eyeCanvas) {
+        eyeCanvas.addEventListener('click', (e) => {
+          updateGazeTargetFromClient(e.clientX, e.clientY);
+          addRipple(e.clientX, e.clientY);
+          startBlink(performance.now());
+        });
+      }
+
+      const drawerBtn = document.getElementById('toggleDrawerBtn');
+      if (drawerBtn) {
+        drawerBtn.addEventListener('click', () => {
+          applyDrawerState(!eyeState.drawerOpen);
+        });
+      }
+
+      document.querySelectorAll('.palette-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const pKey = btn.getAttribute('data-palette');
+          if (pKey) applyPaletteSelection(pKey);
+        });
+      });
+
+      document.querySelectorAll('.density-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dKey = btn.getAttribute('data-density');
+          if (dKey) applyDensitySelection(dKey);
+        });
+      });
+
+      const hideAllBtn = document.getElementById('hideAllUiBtn');
+      if (hideAllBtn) {
+        hideAllBtn.addEventListener('click', () => {
+          applyFullUiVisibility(true);
+        });
+      }
+
+      const showFloatingBtn = document.getElementById('showUiFloatingBtn');
+      if (showFloatingBtn) {
+        showFloatingBtn.addEventListener('click', () => {
+          applyFullUiVisibility(false);
+        });
+      }
+
+      const blinkBtn = document.getElementById('blinkActionBtn');
+      if (blinkBtn) {
+        blinkBtn.addEventListener('click', () => {
+          startBlink(performance.now());
+        });
+      }
+
+      const replayBtn = document.getElementById('replayActionBtn');
+      if (replayBtn) {
+        replayBtn.addEventListener('click', () => {
+          replayRevealAnimation();
+        });
+      }
+
+      window.addEventListener('resize', () => {
+        syncCanvasSize();
+        renderEyeFrame(performance.now());
+      });
+    }
+
+    function bootEyePage() {
+      eyeCanvas = document.getElementById('eyeCanvas');
+      if (!eyeCanvas) return;
+      eyeCtx = eyeCanvas.getContext('2d');
+      if (!eyeCtx) return;
+
+      syncCanvasSize();
+      applyPaletteSelection('blueGrey');
+      applyDensitySelection('high');
+      applyDrawerState(false);
+      applyFullUiVisibility(false);
+      schedulePeriodicBlink(performance.now());
+      replayRevealAnimation();
+      bindAllEvents();
+
+      renderEyeFrame(performance.now());
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(stepAnimationLoop);
+    }
+
+    window.addEventListener('DOMContentLoaded', bootEyePage);
+  </script>
+</body>
+</html>
+```
